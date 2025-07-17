@@ -298,7 +298,7 @@ router.put("/:id", uploadStudent.single("photo"), async (req, res) => {
         );
         await fs.unlink(oldPhotoPath).catch(() => {});
       }
-      student.photo = `/uploads/students/${req.file.filename}`;
+      student.photo = `${process.env.BASE_URL}/uploads/students/${req.file.filename}`;
     }
 
     await student.save();
