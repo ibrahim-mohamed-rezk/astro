@@ -5,6 +5,10 @@ const ratingSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  day:{
+    type: Number,
+    required: true
+  },
   assignments: {
     type: Number,
     min: 0,
@@ -23,7 +27,7 @@ const ratingSchema = new mongoose.Schema({
     max: 100,
     default: 0,
   },
-  date: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },

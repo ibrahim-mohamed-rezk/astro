@@ -49,13 +49,13 @@ const fileFilter = (req, file, cb) => {
 
 const uploadStudent = multer({
   storage: studentStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
   fileFilter: fileFilter,
 });
 
 const uploadBadge = multer({
   storage: badgeStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
   fileFilter: fileFilter,
 });
 

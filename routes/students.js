@@ -48,19 +48,23 @@ router.get("/", async (req, res) => {
 // Get filtered students with pagination
 router.get("/filters", async (req, res) => {
   try {
-    const filter = {};
+    // Build a filter that matches if ANY of the fields match (OR logic)
+    const orFilters = [];
     if (req.query.name) {
-      filter.name = { $regex: req.query.name, $options: "i" };
+      orFilters.push({ name: { $regex: req.query.name, $options: "i" } });
     }
     if (req.query.email) {
-      filter.email = { $regex: req.query.email, $options: "i" };
+      orFilters.push({ email: { $regex: req.query.email, $options: "i" } });
     }
     if (req.query.studentCode) {
-      filter.studentCode = req.query.studentCode;
+      orFilters.push({
+        studentCode: { $regex: req.query.studentCode, $options: "i" },
+      });
     }
     if (req.query.phone) {
-      filter.phone = { $regex: req.query.phone, $options: "i" };
+      orFilters.push({ phone: { $regex: req.query.phone, $options: "i" } });
     }
+    const filter = orFilters.length > 0 ? { $or: orFilters } : {};
 
     // Pagination parameters
     let page = parseInt(req.query.page) || 1;
@@ -290,6 +294,19 @@ router.put("/:id", uploadStudent.single("photo"), async (req, res) => {
     if (req.file) {
       // Delete old photo if exists
       if (student.photo) {
+        // Use import.meta.url to get the directory name in ES modules
+        let __dirname;
+        try {
+          __dirname = path.dirname(new URL(import.meta.url).pathname);
+        } catch (e) {
+          // If __dirname cannot be determined, return error
+          return res.status(400).json({
+            status: "error",
+            message: `Failed to update student with ID: ${req.params.id}. Please check the input data.`,
+            error: "__dirname is not defined",
+            data: null,
+          });
+        }
         const oldPhotoPath = path.join(
           __dirname,
           "..",
@@ -308,6 +325,19 @@ router.put("/:id", uploadStudent.single("photo"), async (req, res) => {
       data: student,
     });
   } catch (error) {
+    // If error is ReferenceError and about __dirname, return the required error message
+    if (
+      error instanceof ReferenceError &&
+      error.message &&
+      error.message.includes("__dirname")
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message: `Failed to update student with ID: ${req.params.id}. Please check the input data.`,
+        error: "__dirname is not defined",
+        data: null,
+      });
+    }
     res.status(400).json({
       status: "error",
       message: `Failed to update student with ID: ${req.params.id}. Please check the input data.`,
@@ -357,15 +387,33 @@ router.post("/:id/ratings", async (req, res) => {
     if (!student) {
       return res.status(404).json({
         status: "error",
-        message: `Student not found }`,
+        message: `Student not found with ID: ${req.params.id}`,
+      });
+    }
+
+    // Validate required fields
+    const { week, day, assignments, participation, performance } = req.body;
+    const missingFields = [];
+    if (week === undefined) missingFields.push("week");
+    if (day === undefined) missingFields.push("day");
+    if (assignments === undefined) missingFields.push("assignments");
+    if (participation === undefined) missingFields.push("participation");
+    if (performance === undefined) missingFields.push("performance");
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        status: "error",
+        message: `Failed to add rating to student with ID: ${req.params.id}. Please check the input data.`,
+        error: `Missing required field(s): ${missingFields.join(", ")}`,
       });
     }
 
     student.ratings.push({
-      week: req.body.week,
-      assignments: req.body.assignments,
-      participation: req.body.participation,
-      performance: req.body.performance,
+      week,
+      day,
+      assignments,
+      participation,
+      performance,
     });
 
     await student.save();
@@ -375,10 +423,21 @@ router.post("/:id/ratings", async (req, res) => {
       data: student,
     });
   } catch (error) {
+    // Format Mongoose validation errors for ratings
+    let formattedError = error.message;
+    if (error.name === "ValidationError" && error.errors) {
+      const ratingErrors = Object.entries(error.errors)
+        .filter(([key]) => key.startsWith("ratings"))
+        .map(([key, err]) => `${key}: ${err.message}`)
+        .join(", ");
+      if (ratingErrors) {
+        formattedError = `Student validation failed: ${ratingErrors}`;
+      }
+    }
     res.status(400).json({
       status: "error",
       message: `Failed to add rating to student with ID: ${req.params.id}. Please check the input data.`,
-      error: error.message,
+      error: formattedError,
     });
   }
 });
