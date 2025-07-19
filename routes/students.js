@@ -442,6 +442,87 @@ router.post("/:id/ratings", async (req, res) => {
   }
 });
 
+// Update rating
+router.put("/:id/ratings/:ratingId", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({
+        status: "error",
+        message: `Student not found with ID: ${req.params.id}`,
+      });
+    }
+
+    const ratingIndex = student.ratings.findIndex(
+      (rating) => rating._id.toString() === req.params.ratingId
+    );
+
+    if (ratingIndex === -1) {
+      return res.status(404).json({
+        status: "error",
+        message: `Rating not found with ID: ${req.params.ratingId} for student with ID: ${req.params.id}`,
+      });
+    }
+
+    student.ratings[ratingIndex] = {
+      ...student.ratings[ratingIndex],
+      ...req.body,
+    };
+
+    await student.save();
+    res.json({
+      status: "success",
+      message: `Rating with ID: ${req.params.ratingId} updated successfully for student with ID: ${req.params.id}`,
+      data: student,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: `Failed to update rating with ID: ${req.params.ratingId} for student with ID: ${req.params.id}. Please check the input data.`,
+      error: error.message,
+    });
+  }
+});
+
+// Delete rating
+router.delete("/:id/ratings/:ratingId", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({
+        status: "error",
+        message: `Student not found with ID: ${req.params.id}`,
+      });
+    }
+
+    const ratingIndex = student.ratings.findIndex(
+      (rating) => rating._id.toString() === req.params.ratingId
+    );
+
+    if (ratingIndex === -1) {
+      return res.status(404).json({
+        status: "error",
+        message: `Rating not found with ID: ${req.params.ratingId} for student with ID: ${req.params.id}`,
+      });
+    }
+
+    student.ratings.splice(ratingIndex, 1);
+    await student.save();
+
+    res.json({
+      status: "success",
+      message: `Rating with ID: ${req.params.ratingId} deleted successfully from student with ID: ${req.params.id}`,
+      data: student,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: `Failed to delete rating with ID: ${req.params.ratingId} from student with ID: ${req.params.id}.`,
+      error: error.message,
+    });
+  }
+});
+
 // Add badge to student
 router.post("/:id/badges", async (req, res) => {
   try {
