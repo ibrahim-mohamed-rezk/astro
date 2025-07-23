@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import studentsRouter from "./routes/students.js";
 import badgesRouter from "./routes/badges.js";
+import attendanceRouter from "./routes/attendance.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -40,6 +41,8 @@ connectDB();
 // Routes
 app.use("/api/students", studentsRouter);
 app.use("/api/badges", badgesRouter);
+app.use("/api/attendance", attendanceRouter);
+
 
 // Serve HTML
 app.get("/api/", (req, res) => {

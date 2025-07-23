@@ -32,7 +32,35 @@ const ratingSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
+const attendanceSchema = new mongoose.Schema({
+  day: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 31
+  },
+  week: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 53
+  },
+  month: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 12
+  },
+  status: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 const studentSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -56,6 +84,7 @@ const studentSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+   attendance: [attendanceSchema],
   ratings: [ratingSchema],
   badges: [
     {
